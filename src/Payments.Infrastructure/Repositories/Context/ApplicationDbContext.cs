@@ -28,15 +28,9 @@ public class ApplicationDbContext : DbContext, IBaseRepository<Payment>
 
     public async Task AddAsync(Payment payment)
     {
-        if (_isInMemory)
-        {
-            Payments.Local.Add(payment);
-            await Payments.AddAsync(payment);
-        }
-        else
-        {
-            await Payment.InsertOneAsync(payment);
-        }
+
+        await Payment.InsertOneAsync(payment);
+
     }
 
     public async Task<Payment?> FindOneAsync(Guid transactionId)

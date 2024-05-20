@@ -52,7 +52,7 @@ public class TransactionEventHandler : IHandleMessages<TransactionEvent>
 
     public static PaymentStatus GetRandomPaymentStatus(decimal value)
     {
-        if (value == 0)
+        if (value <= 0)
         {
             return PaymentStatus.Declined;
         }
