@@ -39,7 +39,6 @@ namespace Unity.Tests
                 Value = 100
             };
 
-
             await handler.Item2.AddAsync(payment);
 
             var result = await handler.Item1.Handle(new GetPaymentByTransactionIdQuery(payment.TransactionId), CancellationToken.None);

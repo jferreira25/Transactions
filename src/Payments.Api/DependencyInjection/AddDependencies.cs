@@ -18,11 +18,7 @@ public static class DependenciesConfiguration
             return client.GetDatabase(builder.Configuration["MongoDB:DatabaseName"]);
         });
 
-        builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        {
-            if (builder.Environment.IsDevelopment())
-                options.UseInMemoryDatabase("InMemoryDb");
-        });
+        builder.Services.AddDbContext<ApplicationDbContext>();
 
         builder.Services.AddScoped<IBaseRepository<Payment>, ApplicationDbContext>();
     }

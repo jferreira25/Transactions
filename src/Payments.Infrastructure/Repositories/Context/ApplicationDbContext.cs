@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.InMemory.Infrastructure.Internal;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 using Payments.Infrastructure.Entities;
@@ -15,10 +16,13 @@ public class ApplicationDbContext : DbContext, IBaseRepository<Payment>
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IConfiguration configuration)
         : base(options)
     {
-        _isInMemory = Database.IsInMemory();
+        _isInMemory = options.Extensions.OfType<InMemoryOptionsExtension>().Any();
 
-        var client = new MongoClient(configuration["ConnectionsString:MongoDB"]);
-        _mongoDatabase = client.GetDatabase(configuration["MongoDB:DatabaseName"]);
+        if (!_isInMemory)
+        {
+            var client = new MongoClient(configuration["ConnectionsString:MongoDB"]);
+            _mongoDatabase = client.GetDatabase(configuration["MongoDB:DatabaseName"]);
+        }
     }
 
     public DbSet<Payment> Payments { get; set; }
@@ -28,14 +32,22 @@ public class ApplicationDbContext : DbContext, IBaseRepository<Payment>
 
     public async Task AddAsync(Payment payment)
     {
-
-        await Payment.InsertOneAsync(payment);
-
+        if (_isInMemory)
+        {
+            Payments.Local.Add(payment);
+            await Payments.AddAsync(payment);
+        }
+        else
+        {
+            await Payment.InsertOneAsync(payment);
+        }
     }
 
     public async Task<Payment?> FindOneAsync(Guid transactionId)
     {
-        return Payments.Local.FirstOrDefault(x => x.TransactionId == transactionId) ??
-                await Payment.Find(p => p.TransactionId == transactionId).FirstOrDefaultAsync();
+        if (_isInMemory)
+            return Payments.Local.FirstOrDefault(x => x.TransactionId == transactionId);
+
+        return await Payment.Find(p => p.TransactionId == transactionId).FirstOrDefaultAsync();
     }
 }
