@@ -1,0 +1,44 @@
+version: "3"
+
+services:
+  mongodb:
+    container_name: mongodb
+    image: mongo
+    restart: always
+    volumes:
+      - ./.docker/data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - transactions_payment
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.8-management
+    restart: always
+    environment: 
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123*
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - transactions_payment
+  api:
+    container_name: api
+    image: payment
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8081:80"
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - transactions_payment
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Development'
+networks:
+  transactions_payment:
+    driver: bridge
